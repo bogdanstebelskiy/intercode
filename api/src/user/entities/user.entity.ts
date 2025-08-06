@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 
 @Entity()
 export class User {
@@ -25,6 +27,9 @@ export class User {
 
   @Column('text', { array: true, nullable: true, default: '{}' })
   allergies: string[];
+
+  @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshToken: RefreshToken;
 
   @CreateDateColumn()
   createdAt: Date;
