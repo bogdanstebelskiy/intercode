@@ -8,11 +8,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { Recipe } from '../recipe/entities/recipe.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Recipe)
+    private readonly recipeRepository: Repository<Recipe>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -34,7 +37,20 @@ export class UserService {
     return await this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User> {
+  async findRecipesByUserId(userId: string): Promise<Recipe[]> {
+    const recipes = await this.recipeRepository.find({
+      where: { authorId: userId },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!recipes) {
+      throw new NotFoundException(`No recipes found for user ${{ userId }}`);
+    }
+
+    return recipes;
+  }
+
+  async findOne(id: string): Promise<User> {
     const existingUser = await this.userRepository.findOne({
       where: {
         id,
@@ -48,7 +64,7 @@ export class UserService {
     return existingUser;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const existingUser = await this.findOne(id);
 
     Object.assign(existingUser, updateUserDto);
@@ -56,7 +72,7 @@ export class UserService {
     return await this.userRepository.save(existingUser);
   }
 
-  async remove(id: number): Promise<User> {
+  async remove(id: string): Promise<User> {
     const existingUser = await this.findOne(id);
 
     return await this.userRepository.remove(existingUser);
