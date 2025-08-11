@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MyTestModule } from './my-test/my-test.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
@@ -9,6 +8,8 @@ import { AppService } from './app.service';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { LikeModule } from './like/like.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
   imports: [
@@ -24,9 +25,10 @@ import { JwtModule } from '@nestjs/jwt';
       useFactory: getTypeOrmConfig,
       inject: [ConfigService],
     }),
-    MyTestModule,
     UserModule,
     RecipeModule,
+    LikeModule,
+    RatingModule,
     AuthModule,
   ],
   controllers: [AppController],
