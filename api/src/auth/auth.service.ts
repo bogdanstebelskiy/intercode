@@ -90,10 +90,10 @@ export class AuthService {
     return this.generateTokens(token.user.id, token.user.userName);
   }
 
-  private async generateTokens(userId: number, userName: string) {
+  private async generateTokens(userId: string, userName: string) {
     const accessToken = this.jwtService.sign(
       { userId, userName },
-      { expiresIn: '15m' },
+      { expiresIn: '1m' },
     );
     const refreshToken = uuidv4();
 
@@ -101,7 +101,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async storeRefreshToken(token: string, userId: number) {
+  private async storeRefreshToken(token: string, userId: string) {
     const expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() + 1);
 

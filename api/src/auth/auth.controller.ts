@@ -7,15 +7,22 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
+import type { AuthenticatedRequest } from './types/auth.interfaces';
+import { AuthGuard } from './guards/auth.guard';
+import { UserService } from '../user/user.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post('signup')
   async signup(@Body() signupData: SignupDto) {
@@ -40,6 +47,16 @@ export class AuthController {
     return { accessToken, userId };
   }
 
+  @Post('logout')
+  @HttpCode(200)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'strict',
+      path: '/',
+    });
+  }
+
   @Get('refresh')
   async refreshTokens(
     @Req() req: Request,
@@ -60,6 +77,13 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    return { refreshToken: newAccessToken };
+    return { accessToken: newAccessToken };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('me')
+  async getMe(@Req() req: AuthenticatedRequest) {
+    const user = await this.userService.findOne(req.user.userId);
+    return { userId: user.id, userName: user.userName, avatar: user.avatar };
   }
 }
