@@ -1,27 +1,14 @@
-import './App.css'
-
-import axios from 'axios'
-import {useEffect, useState} from "react";
+import "./App.css";
+import withAuth from "./features/auth/hocs/withAuth.jsx";
+import RecipesListPage from "./features/recipies/pages/RecipesListPage.jsx";
+import TokenService from "./features/auth/services/token.service.js";
 
 function App() {
-    const [message, setMessage] = useState('')
-
-    useEffect(() => {
-        axios.get(`${import.meta.env.VITE_API_URL}/my-test`)
-            .then(response => {
-                setMessage(response.data)
-            })
-            .catch(error => {
-                console.error('Failed to fetch message:', error);
-            })
-
-    }, [])
-
   return (
     <>
-        <h1>{message.content}</h1>
+      <RecipesListPage />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
