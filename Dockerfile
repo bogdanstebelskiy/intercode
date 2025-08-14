@@ -10,7 +10,7 @@ WORKDIR /api
 COPY api/packag*.json ./
 RUN npm install
 COPY api/ ./
-COPY --from=build-ui /ui/build ./public
+COPY --from=build-ui /ui/dist ./public
 RUN npm run build
 
 FROM node:24-alpine3.21
@@ -22,4 +22,4 @@ COPY api/package*.json ./
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "dist/main.ts"]
+CMD ["node", "dist/main.js"]
