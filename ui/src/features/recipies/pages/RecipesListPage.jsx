@@ -7,12 +7,11 @@ import { useState } from "react";
 import useDebounce from "../../../hooks/useDebounce.js";
 import RecipeModal from "../components/RecipeModal.jsx";
 import RecipeFilterSort from "../components/RecipeFilterSort.jsx";
+import useFetchRecipesLimited from "../hooks/useFetchRecipesLimited.jsx";
+import { IconFilter } from "@tabler/icons-react";
 
 export default function RecipesListPage() {
   const { isAuth } = useAuth();
-
-  const [opened, { open, close }] = useDisclosure(false);
-  const [popoverOpened, setPopoverOpened] = useState(false);
 
   const [filters, setFilters] = useState({
     name: "",
@@ -22,8 +21,19 @@ export default function RecipesListPage() {
 
   const debouncedFilters = useDebounce(filters, 500);
 
+  /* let { recipes, loading, loadingMore, error, hasMore, lastPostElementRef } =
+    useFetchRecipesLimited(filters);*/
+  const recipeData = useFetchRecipesLimited(debouncedFilters);
+
+  const [opened, { open, close }] = useDisclosure(false);
+  const [popoverOpened, setPopoverOpened] = useState(false);
+
   const handleReset = () => {
-    setFilters({});
+    setFilters({
+      name: "",
+      sortBy: "createdAt",
+      sortOrder: "DESC",
+    });
   };
 
   const updateFilter = (key, value) => {
@@ -33,11 +43,20 @@ export default function RecipesListPage() {
     }));
   };
 
+  const handleRecipeCreate = (newRecipe) => {
+    recipeData.setRecipes((prev) => [newRecipe, ...prev]);
+  };
+
   return (
     <>
       <Stack>
         <Flex justify="center" align="center" mt="md" gap="xs">
-          <RecipeModal opened={opened} onClose={close} recipe={null} />
+          <RecipeModal
+            opened={opened}
+            onClose={close}
+            recipe={null}
+            onRecipeCreate={handleRecipeCreate}
+          />
           {isAuth && (
             <Button variant="outline" onClick={open}>
               <IconPlus size={20} />
@@ -45,7 +64,7 @@ export default function RecipesListPage() {
           )}
           <Autocomplete
             clearable
-            value={filters.search}
+            value={filters.name}
             onChange={(value) => updateFilter("name", value)}
             placeholder="Find me..."
             w={{ base: "70%" }}
@@ -54,7 +73,7 @@ export default function RecipesListPage() {
             opened={popoverOpened}
             onClose={() => setPopoverOpened(false)}
             width={320}
-            position="bottom-start"
+            position="bottom"
             withArrow
             shadow="md"
             trapFocus
@@ -65,7 +84,7 @@ export default function RecipesListPage() {
                 variant="outline"
                 onClick={() => setPopoverOpened((o) => !o)}
               >
-                Sort / Filter
+                <IconFilter size={16} />
               </Button>
             </Popover.Target>
             <Popover.Dropdown>
@@ -80,7 +99,7 @@ export default function RecipesListPage() {
           </Popover>
         </Flex>
         <Flex justify="center" align="center" mt="md">
-          <RecipeList filters={debouncedFilters} />
+          <RecipeList {...recipeData} />
         </Flex>
       </Stack>
     </>

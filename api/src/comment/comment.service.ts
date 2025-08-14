@@ -8,24 +8,58 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateCommentDto } from './dtos/update-comment.dto';
 import { CreateCommentDto } from './dtos/create-comment.dto';
 import { Comment } from './entities/comment.entity';
+import { Recipe } from '../recipe/entities/recipe.entity';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
+    @InjectRepository(Recipe)
+    private readonly recipeRepository: Repository<Recipe>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(
     createCommentDto: CreateCommentDto,
     userId: string,
-  ): Promise<Comment> {
+  ): Promise<any> {
+    const recipeId = createCommentDto.recipeId;
+    const existingRecipe = await this.recipeRepository.findOne({
+      where: { id: recipeId },
+    });
+
+    if (!existingRecipe) {
+      throw new NotFoundException(`Recipe with id ${recipeId} not found`);
+    }
+
+    const existingUser = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
     const comment = this.commentRepository.create({
       ...createCommentDto,
       userId,
     });
 
-    return await this.commentRepository.save(comment);
+    const savedComment = await this.commentRepository.save(comment);
+
+    const { userId: _userId, ...rest } = savedComment;
+
+    return {
+      ...rest,
+      user: {
+        id: existingUser.id,
+        userName: existingUser.userName,
+        avatar: existingUser.avatar,
+      },
+    };
   }
 
   async findByRecipe(recipeId: string): Promise<Comment[]> {

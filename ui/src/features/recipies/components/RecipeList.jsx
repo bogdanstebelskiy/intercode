@@ -1,12 +1,15 @@
 import RecipeCard from "./RecipeCard.jsx";
 import { Alert, Flex, Loader } from "@mantine/core";
-import useFetchRecipesLimited from "../hooks/useFetchRecipesLimited.jsx";
 import { IconInfoCircle } from "@tabler/icons-react";
 
-export default function RecipeList({ filters }) {
-  let { recipes, loading, error, hasMore, lastPostElementRef } =
-    useFetchRecipesLimited(filters);
-
+export default function RecipeList({
+  recipes,
+  loading,
+  loadingMore,
+  error,
+  hasMore,
+  lastPostElementRef,
+}) {
   return (
     <>
       {error ? (
@@ -36,8 +39,16 @@ export default function RecipeList({ filters }) {
               return <RecipeCard key={recipe.id} recipe={recipe} />;
             }
           })}
-          {loading && <div>Loading more...</div>}
-          {!hasMore && <div>No more recipes</div>}
+          {loadingMore && (
+            <Flex align="center" justify="center">
+              Loading more...
+            </Flex>
+          )}
+          {!hasMore && (
+            <Flex align="center" justify="center">
+              No more recipes
+            </Flex>
+          )}
         </Flex>
       )}
     </>

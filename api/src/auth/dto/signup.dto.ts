@@ -1,4 +1,10 @@
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class SignupDto {
   @IsString()
@@ -18,4 +24,10 @@ export class SignupDto {
       'Password too weak: must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
   })
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(5, { message: 'avatarUrl is too short' })
+  @MaxLength(2048, { message: 'avatarUrl is too long' })
+  avatar: string;
 }

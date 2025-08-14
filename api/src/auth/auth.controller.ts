@@ -35,7 +35,7 @@ export class AuthController {
     @Body() loginData: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { refreshToken, accessToken, userId } =
+    const { refreshToken, accessToken, user } =
       await this.authService.login(loginData);
 
     res.cookie('refreshToken', refreshToken, {
@@ -44,7 +44,7 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    return { accessToken, userId };
+    return { accessToken, user };
   }
 
   @Post('logout')

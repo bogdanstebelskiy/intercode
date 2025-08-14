@@ -13,6 +13,7 @@ import { Ingredient } from '../types/ingredient.interface';
 import { User } from '../../user/entities/user.entity';
 import { Like } from '../../like/entities/like.entity';
 import { Rating } from '../../rating/entities/rating.entity';
+import { Comment } from '../../comment/entities/comment.entity';
 
 @Entity()
 export class Recipe {
@@ -56,6 +57,9 @@ export class Recipe {
 
   @OneToMany(() => Rating, (rating) => rating.recipe)
   ratings: Rating[];
+
+  @OneToMany(() => Comment, (comment) => comment.recipe)
+  comments: Comment[];
 
   @CreateDateColumn()
   createdAt: Date;

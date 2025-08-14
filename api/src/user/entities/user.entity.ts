@@ -11,6 +11,7 @@ import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 import { Recipe } from '../../recipe/entities/recipe.entity';
 import { Like } from '../../like/entities/like.entity';
 import { Rating } from '../../rating/entities/rating.entity';
+import { Comment } from '../../comment/entities/comment.entity';
 
 @Entity()
 export class User {
@@ -43,6 +44,9 @@ export class User {
 
   @OneToMany(() => Rating, (rating) => rating.user)
   ratings: Rating[];
+
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 
   @CreateDateColumn()
   createdAt: Date;
