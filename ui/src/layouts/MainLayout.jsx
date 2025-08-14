@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { AppShell } from "@mantine/core";
 import Navbar from "../components/Navbar.jsx";
+import ScrollTopButton from "../components/ScrollTopButton.jsx";
 
 const MainLayout = () => {
   return (
@@ -11,6 +12,7 @@ const MainLayout = () => {
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>
+      <ScrollTopButton />
     </AppShell>
   );
 };

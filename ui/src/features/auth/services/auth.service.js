@@ -1,11 +1,12 @@
 import api from "./api";
 import TokenService from "./token.service";
 
-const signup = (username, password) => {
+const signup = (username, password, avatar) => {
   return api
     .post("/auth/signup", {
       userName: username,
       password,
+      avatar,
     })
     .catch((error) => {
       console.error(error);
@@ -24,7 +25,11 @@ const login = (username, password) => {
         TokenService.updateLocalAccessToken(response.data.accessToken);
       }
 
-      return response.data.userId;
+      if (response.data.user) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      }
+
+      return response.data.user;
     })
     .catch((error) => {
       console.error(error);

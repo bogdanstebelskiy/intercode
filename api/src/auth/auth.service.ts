@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   async signup(signupData: SignupDto) {
-    const { userName, password } = signupData;
+    const { userName, password, avatar } = signupData;
 
     const userNameInUse = await this.userRepository.findOne({
       where: {
@@ -40,6 +40,7 @@ export class AuthService {
     const newUser = this.userRepository.create({
       userName,
       password: hashedPassword,
+      avatar,
     });
 
     await this.userRepository.save(newUser);
@@ -70,7 +71,11 @@ export class AuthService {
 
     return {
       ...tokens,
-      userId: existingUser.id,
+      user: {
+        userId: existingUser.id,
+        userName: existingUser.userName,
+        avatar: existingUser.avatar,
+      },
     };
   }
 

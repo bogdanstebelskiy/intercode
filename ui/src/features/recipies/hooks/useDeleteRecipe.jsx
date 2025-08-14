@@ -21,7 +21,6 @@ export function useDeleteRecipe() {
           title: "Recipe deleted",
           message: "Your recipe was removed successfully.",
           color: "green",
-          position: "bottom-center",
         });
 
         return true;
@@ -33,7 +32,6 @@ export function useDeleteRecipe() {
             title: "Delete failed",
             message: "Something went wrong while deleting.",
             color: "red",
-            position: "bottom-center",
           });
         }
         return false;

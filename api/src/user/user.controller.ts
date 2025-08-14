@@ -10,10 +10,9 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
 import { RecipeService } from '../recipe/recipe.service';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
-@UseGuards(AuthGuard)
 @Controller('users')
 export class UserController {
   constructor(
@@ -21,7 +20,9 @@ export class UserController {
     private readonly recipeService: RecipeService,
   ) {}
 
-  /*@Post()
+  /*
+  @UseGuards(AuthGuard)
+  @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }*/
@@ -37,10 +38,18 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.userService.findOne(id);
+  async findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    const user = await this.userService.findOne(id);
+    return {
+      user: {
+        userId: user.id,
+        userName: user.userName,
+        avatar: user.avatar,
+      },
+    };
   }
 
+  @UseGuards(AuthGuard)
   @Patch(':id')
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
@@ -49,6 +58,7 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.userService.remove(id);

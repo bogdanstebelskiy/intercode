@@ -1,49 +1,110 @@
-import { useEffect, useState } from "react";
 import {
   Title,
   Text,
   Stack,
   Loader,
-  Card,
-  Image,
-  SimpleGrid,
   Flex,
+  Skeleton,
+  Card,
+  Center,
+  UnstyledButton,
+  Avatar,
 } from "@mantine/core";
 import { useFetchUserRecipes } from "../../recipies/hooks/useFetchUserRecipes.jsx";
-import { useAuth } from "../../auth/providers/AuthProvider.jsx";
 import DetailRecipeCard from "../../recipies/components/DetailRecipeCard.jsx";
-import withAuth from "../../auth/hocs/withAuth.jsx";
+import { useNavigate, useParams } from "react-router";
+import { useFetchUser } from "../hooks/useFetchUser.js";
 
 function UserProfilePage() {
-  const { user } = useAuth();
-  console.log("USER PROFILE" + JSON.stringify(user));
-  const { recipes, loading, error } = useFetchUserRecipes(user?.userId);
+  const navigate = useNavigate();
+  const { userId } = useParams();
 
-  if (loading) return <Loader size="lg" />;
+  const { recipes, setRecipes, loading, error } = useFetchUserRecipes(userId);
+  const { user, loading: userLoading, error: userError } = useFetchUser(userId);
 
-  if (error)
-    return (
-      <Text align="center" mt="xl">
-        Error: {error}
-      </Text>
+  const handleRecipeUpdate = (updatedRecipe) => {
+    setRecipes((prev) =>
+      prev.map((recipe) =>
+        recipe.id === updatedRecipe.id ? updatedRecipe : recipe,
+      ),
     );
+  };
+
+  const handleRecipeDelete = (deletedRecipeId) => {
+    setRecipes((prev) =>
+      prev.filter((recipe) => recipe.id !== deletedRecipeId),
+    );
+    navigate(`/profile/${userId}`);
+  };
 
   return (
     <Stack spacing="md" mt="xl" px="sm">
-      <Title order={2}>Hello, {user?.userName}!</Title>
-      <Text size="lg" weight={500} mb="md">
-        Your Recipes
-      </Text>
+      {userError ? (
+        <Center mt="xl">
+          <Card withBorder shadow="sm" p="md" style={{ maxWidth: 400 }}>
+            <Text align="center" c="red" weight={700} size="lg">
+              User doesn't exist
+            </Text>
+          </Card>
+        </Center>
+      ) : userLoading ? (
+        <>
+          <Flex justify="center" align="center" direction="column">
+            <Skeleton height={24} mt={6} width="20%" radius="xl" />
+            <Skeleton height={20} mt={6} width="10%" radius="xl" />
+          </Flex>
+        </>
+      ) : (
+        <>
+          <Flex justify="center" align="center" gap="md">
+            <UnstyledButton
+              onClick={() => navigate(`/profile/${user.userId}`)}
+              style={{ borderRadius: "50%" }}
+            >
+              <Avatar
+                src={user?.avatar}
+                alt={user?.name || "User avatar"}
+                radius="xl"
+                size={64}
+              />
+            </UnstyledButton>
+            <Title order={2}>{user?.userName}</Title>
+          </Flex>
 
-      {recipes.length === 0 && <Text>You have no recipes yet.</Text>}
+          {error && (
+            <Text align="center" mt="xl" c="red">
+              Error: {error}
+            </Text>
+          )}
 
-      <Flex justify="center" align="center" direction="column" gap="md" mt="xl">
-        {recipes.map((recipe) => (
-          <DetailRecipeCard key={recipe.id} recipe={recipe} />
-        ))}
-      </Flex>
+          {!loading && recipes.length === 0 && !error && (
+            <Text>No recipes yet.</Text>
+          )}
+
+          <Flex
+            justify="center"
+            align="center"
+            direction="column"
+            gap="md"
+            mt="xl"
+          >
+            {loading ? (
+              <Loader />
+            ) : (
+              recipes.map((recipe) => (
+                <DetailRecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onRecipeUpdate={handleRecipeUpdate}
+                  onRecipeDelete={handleRecipeDelete}
+                />
+              ))
+            )}
+          </Flex>
+        </>
+      )}
     </Stack>
   );
 }
 
-export default withAuth(UserProfilePage);
+export default UserProfilePage;

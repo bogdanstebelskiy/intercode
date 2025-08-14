@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import RecipeService from "../services/recipes.service.js";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { isEqual } from "lodash";
+import RecipeService from "../services/recipes.service.js";
 
 const TAKE = 3;
 
-export default function useFetchRecipes(filters) {
+export default function useFetchRecipesLimited(filters) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -20,6 +21,8 @@ export default function useFetchRecipes(filters) {
       setSkip(0);
       setHasMore(true);
       setError(null);
+      setLoading(true);
+      setLoadingMore(false);
     }
 
     prevFiltersRef.current = filters;
@@ -28,7 +31,17 @@ export default function useFetchRecipes(filters) {
   useEffect(() => {
     if (!hasMore) return;
 
-    setLoading(true);
+    const isInitialLoad = skip === 0;
+
+    // Set appropriate loading state
+    if (isInitialLoad) {
+      setLoading(true);
+      setLoadingMore(false);
+    } else {
+      setLoading(false);
+      setLoadingMore(true);
+    }
+
     setError(null);
 
     RecipeService.getRecipes({ ...filters, take: TAKE, skip })
@@ -46,6 +59,7 @@ export default function useFetchRecipes(filters) {
       })
       .finally(() => {
         setLoading(false);
+        setLoadingMore(false);
       });
   }, [filters, skip, hasMore]);
 
@@ -53,21 +67,29 @@ export default function useFetchRecipes(filters) {
 
   const lastPostElementRef = useCallback(
     (node) => {
-      if (loading) return;
+      // Don't attach observer if we're loading more or initial loading
+      if (loading || loadingMore) return;
       if (observer.current) observer.current.disconnect();
 
       observer.current = new IntersectionObserver(
         (entries) => {
-          if (entries[0].isIntersecting && hasMore) {
+          if (
+            entries[0].isIntersecting &&
+            hasMore &&
+            !loading &&
+            !loadingMore
+          ) {
             setSkip((prevSkip) => prevSkip + TAKE);
           }
         },
-        { threshold: 1.0 },
+        {
+          threshold: 1,
+        },
       );
 
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore],
+    [loading, loadingMore, hasMore],
   );
 
   useEffect(() => {
@@ -78,5 +100,13 @@ export default function useFetchRecipes(filters) {
     };
   }, []);
 
-  return { recipes, loading, error, hasMore, lastPostElementRef };
+  return {
+    recipes,
+    setRecipes,
+    loading, // true only for initial load or filter changes
+    loadingMore, // true only when fetching additional pages
+    error,
+    hasMore,
+    lastPostElementRef,
+  };
 }

@@ -7,14 +7,15 @@ import {
   Image,
   Stack,
   useMantineTheme,
-  Avatar, // <-- import Avatar
-  UnstyledButton, // <-- for clickable avatar without default styles
+  Avatar,
+  UnstyledButton,
 } from "@mantine/core";
 import { NavLink, useNavigate } from "react-router";
 import AuthService from "../features/auth/services/auth.service.js";
 import { useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAuth } from "../features/auth/providers/AuthProvider.jsx";
+import logo from "../assets/logo.svg";
 
 export default function Navbar() {
   const [opened, setOpened] = useState(false);
@@ -22,8 +23,6 @@ export default function Navbar() {
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const { isAuth, setIsAuth, setUser, user } = useAuth(); // assuming you have user info here
   const navigate = useNavigate();
-
-  console.log("NAVBAR USER: " + JSON.stringify(user));
 
   const handleLogout = () => {
     AuthService.signout();
@@ -36,11 +35,17 @@ export default function Navbar() {
   return (
     <Group h="100%" px="md">
       <Flex justify="space-between" align="center" w="100%" px="md">
-        <NavLink to="/">
-          <Image src="src/assets/logo.svg" w="50%" />
+        <NavLink
+          to="/"
+          style={{
+            display: "block",
+            width: "150px",
+            textDecoration: "none",
+          }}
+        >
+          <Image src={logo} alt="Logo" w="100%" />
         </NavLink>
 
-        {/* Desktop Navigation Buttons */}
         {!isMobile && (
           <Group spacing="sm" align="center">
             {!isAuth ? (
@@ -54,13 +59,12 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* Avatar clickable to profile */}
                 <UnstyledButton
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate(`/profile/${user.userId}`)}
                   style={{ borderRadius: "50%" }}
                 >
                   <Avatar
-                    src={user?.avatar} // adjust if you have avatar URL in user object
+                    src={user?.avatar}
                     alt={user?.name || "User avatar"}
                     radius="xl"
                     size={40}
@@ -75,7 +79,6 @@ export default function Navbar() {
           </Group>
         )}
 
-        {/* Burger for Mobile */}
         {isMobile && (
           <>
             <Burger opened={opened} onClick={() => setOpened((o) => !o)} />
@@ -89,12 +92,20 @@ export default function Navbar() {
               <Stack>
                 {!isAuth ? (
                   <>
-                    <NavLink to="/signup" onClick={() => setOpened(false)}>
+                    <NavLink
+                      to="/signup"
+                      onClick={() => setOpened(false)}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
                       <Button variant="gradient" fullWidth>
                         Sign Up
                       </Button>
                     </NavLink>
-                    <NavLink to="/login" onClick={() => setOpened(false)}>
+                    <NavLink
+                      to="/login"
+                      onClick={() => setOpened(false)}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
                       <Button fullWidth variant="outline">
                         Login
                       </Button>
@@ -104,7 +115,7 @@ export default function Navbar() {
                   <>
                     <UnstyledButton
                       onClick={() => {
-                        navigate("/profile");
+                        navigate(`/profile/${user.userId}`);
                         setOpened(false);
                       }}
                       style={{

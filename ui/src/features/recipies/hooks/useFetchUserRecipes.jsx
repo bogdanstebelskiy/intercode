@@ -32,5 +32,5 @@ export function useFetchUserRecipes(userId) {
     };
   }, [userId]);
 
-  return { recipes, loading, error };
+  return { recipes, setRecipes, loading, error };
 }
