@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Group, Text, Image, Flex } from "@mantine/core";
+import { Text, Image, Flex } from "@mantine/core";
 
-export default function Dropzone({ style, value, onChange, error, ...props }) {
+export default function Dropzone({ style, value, onChange, error }) {
   const [rejected, setRejected] = useState(null);
 
   const file = value;

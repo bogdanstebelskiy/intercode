@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Badge,
-  Button,
   Card,
   Flex,
   Group,
@@ -11,17 +10,11 @@ import {
   Skeleton,
   Spoiler,
   Text,
-  ThemeIcon,
   Title,
 } from "@mantine/core";
 import { formatTime } from "../utils/formatters.js";
 import MDEditor from "@uiw/react-md-editor";
-import {
-  IconCircleCheck,
-  IconDots,
-  IconEdit,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../../auth/providers/AuthProvider.jsx";
 import RecipeRating from "./RecipeRating.jsx";
 import LikeButton from "./LikeButton.jsx";
@@ -32,7 +25,6 @@ import { useDeleteRecipe } from "../hooks/useDeleteRecipe.jsx";
 import { Link } from "react-router";
 import CommentList from "../../comments/components/CommentList.jsx";
 import { useFetchUser } from "../../user/hooks/useFetchUser.js";
-import { IconCircleFilled } from "@tabler/icons-react";
 
 const DetailRecipeCard = ({ recipe, onRecipeUpdate, onRecipeDelete }) => {
   const { user } = useAuth();

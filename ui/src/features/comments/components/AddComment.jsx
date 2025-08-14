@@ -1,5 +1,5 @@
 import { useForm } from "@mantine/form";
-import { Textarea, Button, Group, Text, Flex, Stack, Box } from "@mantine/core";
+import { Textarea, Button, Text, Stack, Box } from "@mantine/core";
 import { useAddComment } from "../hooks/useAddComment.js";
 
 export default function AddComment({ recipeId, onAdded }) {

@@ -42,7 +42,7 @@ function UserProfilePage() {
       {userError ? (
         <Center mt="xl">
           <Card withBorder shadow="sm" p="md" style={{ maxWidth: 400 }}>
-            <Text align="center" color="red" weight={700} size="lg">
+            <Text align="center" c="red" weight={700} size="lg">
               User doesn't exist
             </Text>
           </Card>
