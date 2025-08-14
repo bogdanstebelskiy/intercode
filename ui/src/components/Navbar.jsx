@@ -15,6 +15,7 @@ import AuthService from "../features/auth/services/auth.service.js";
 import { useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAuth } from "../features/auth/providers/AuthProvider.jsx";
+import logo from "../assets/logo.svg";
 
 export default function Navbar() {
   const [opened, setOpened] = useState(false);
@@ -42,7 +43,7 @@ export default function Navbar() {
             textDecoration: "none",
           }}
         >
-          <Image src="src/assets/logo.svg" w="100%" />
+          <Image src={logo} alt="Logo" w="100%" />
         </NavLink>
 
         {!isMobile && (
