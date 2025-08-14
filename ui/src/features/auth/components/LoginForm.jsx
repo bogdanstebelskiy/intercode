@@ -1,11 +1,11 @@
 import {
-  Box,
   Button,
   Card,
   Flex,
   Group,
   PasswordInput,
   Stack,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -15,6 +15,8 @@ import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { notifications } from "@mantine/notifications";
 import AuthService from "../services/auth.service.js";
+import { useRecaptcha } from "../hooks/useRecaptcha.js";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginForm() {
   const form = useForm({
@@ -40,6 +42,16 @@ export default function LoginForm() {
       },
     },
   });
+  const {
+    recaptchaValue,
+    setRecaptchaValue,
+    recaptchaError,
+    setRecaptchaError,
+    recaptchaRef,
+    handleRecaptchaChange,
+    handleRecaptchaExpired,
+    validateRecaptcha,
+  } = useRecaptcha();
 
   const { isAuth, setIsAuth, setUser } = useAuth();
 
@@ -52,15 +64,23 @@ export default function LoginForm() {
   }, [navigate]);
 
   const handleLogin = async (values) => {
-    const userId = await AuthService.login(values.userName, values.password);
+    setRecaptchaError("");
 
-    if (!userId) {
+    if (!validateRecaptcha()) {
+      return;
+    }
+
+    const user = await AuthService.login(values.userName, values.password);
+
+    if (!user) {
       notifications.show({
         title: "Unauthorized",
         message: "Invalid credentials",
         color: "red",
-        position: "bottom-center",
       });
+
+      setRecaptchaValue(null);
+      recaptchaRef.current?.reset();
       return;
     }
 
@@ -68,15 +88,23 @@ export default function LoginForm() {
       title: "Login successful",
       message: "Redirection to home page",
       color: "green",
-      position: "bottom-center",
     });
 
-    setIsAuth(true);
-    console.log("USERIDDDDD: " + JSON.stringify(userId));
+    form.reset();
+    setRecaptchaValue(null);
+    recaptchaRef.current?.reset();
 
-    setUser({ userId });
+    setIsAuth(true);
+
+    setUser(user);
 
     navigate("/", { replace: true });
+  };
+
+  const isFormValid = () => {
+    return (
+      !form.isDirty() || Object.keys(form.errors).length > 0 || !recaptchaValue
+    );
   };
 
   return (
@@ -103,8 +131,34 @@ export default function LoginForm() {
             {...form.getInputProps("password")}
           />
 
+          <Flex justify="center" align="center" mt="md">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_KEY}
+              onChange={handleRecaptchaChange}
+              onExpired={handleRecaptchaExpired}
+              onError={() => {
+                setRecaptchaValue(null);
+                setRecaptchaError(
+                  "reCAPTCHA error occurred. Please try again.",
+                );
+              }}
+            />
+            {recaptchaError && (
+              <Text size="xs" c="red" mt={5}>
+                {recaptchaError}
+              </Text>
+            )}
+          </Flex>
+
           <Group justify="flex-end" mt="md">
-            <Button type="submit">Login</Button>
+            <Button
+              type="submit"
+              disabled={form.submitting || isFormValid()}
+              loading={form.submitting}
+            >
+              Login
+            </Button>
           </Group>
         </Stack>
       </form>

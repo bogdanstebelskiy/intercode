@@ -1,94 +1,111 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "@mantine/form";
-import { notifications } from "@mantine/notifications";
-import UploadService from "../../upload/services/upload.service.js";
-import RecipeService from "../services/recipes.service.js";
 import { Unit } from "../constants/index.js";
 
-export function useRecipeForm({ recipe, isEdit, opened, onClose, user }) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [file, setFile] = useState(recipe?.photo || null);
-  const [fileError, setFileError] = useState("");
-  const [description, setDescription] = useState(recipe?.description || "");
-  const [descriptionError, setDescriptionError] = useState("");
+export function useRecipeForm({ recipe }) {
   const [ingredients, setIngredients] = useState(recipe?.ingredients || []);
 
+  useEffect(() => {
+    form.setValues(initialValues);
+    setIngredients(recipe?.ingredients || []);
+  }, [recipe]);
+
+  const initialValues = {
+    name: recipe?.name || "",
+    timeInMinutes: recipe?.timeInMinutes || 0,
+    difficulty: recipe?.difficulty || "easy",
+    description: recipe?.description || "",
+    photo: recipe?.photo || null,
+  };
+
   const form = useForm({
-    initialValues: {
-      name: recipe?.name || "",
-      timeInMinutes: recipe?.timeInMinutes || 0,
-      difficulty: recipe?.difficulty || "easy",
-    },
+    initialValues,
     validate: {
-      name: (val) =>
-        val.length < 3 ? "Name must be at least 3 characters" : null,
-      timeInMinutes: (val) => (val <= 0 ? "Time must be greater than 0" : null),
+      name: (val) => {
+        if (!val || val.trim().length === 0) {
+          return "Name is required";
+        }
+        if (val.trim().length < 3) {
+          return "Name must be at least 3 characters";
+        }
+        if (val.trim().length > 100) {
+          return "Name must be less than 100 characters";
+        }
+        return null;
+      },
+
+      timeInMinutes: (val) => {
+        if (!val && val !== 0) {
+          return "Cooking time is required";
+        }
+        if (typeof val !== "number" || isNaN(val)) {
+          return "Cooking time must be a valid number";
+        }
+        if (val <= 0) {
+          return "Cooking time must be greater than 0";
+        }
+        if (val > 1440) {
+          // 24 hours in minutes
+          return "Cooking time cannot exceed 24 hours";
+        }
+        return null;
+      },
+
+      difficulty: (val) => {
+        const validDifficulties = ["easy", "medium", "hard"];
+        if (!val) {
+          return "Difficulty level is required";
+        }
+        if (!validDifficulties.includes(val.toLowerCase())) {
+          return "Please select a valid difficulty level";
+        }
+        return null;
+      },
+
+      description: (val) => {
+        if (!val || val.trim().length === 0) {
+          return "Description is required";
+        }
+        if (val.trim().length < 10) {
+          return "Description must be at least 10 characters";
+        }
+        if (val.trim().length > 5000) {
+          return "Description must be less than 5000 characters";
+        }
+        return null;
+      },
+
+      photo: (val) => {
+        if (!val) {
+          return "Recipe photo is required";
+        }
+
+        if (val instanceof File) {
+          const maxSize = 5 * 1024 * 1024;
+          const allowedTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+          ];
+
+          if (!allowedTypes.includes(val.type)) {
+            return "Photo must be a JPEG, PNG, or WebP image";
+          }
+
+          if (val.size > maxSize) {
+            return "Photo size must be less than 5MB";
+          }
+        }
+
+        if (typeof val === "string" && val.trim().length === 0) {
+          return "Recipe photo is required";
+        }
+
+        return null;
+      },
     },
   });
-
-  useEffect(() => {
-    if (opened) {
-      const initialValues = {
-        name: recipe?.name || "",
-        timeInMinutes: recipe?.timeInMinutes || 0,
-        difficulty: recipe?.difficulty || "easy",
-      };
-
-      form.setValues(initialValues);
-      form.resetDirty(initialValues); // Reset dirty state too
-      setIngredients(recipe?.ingredients || []);
-      setFile(recipe?.photo || null);
-      setDescription(recipe?.description || "");
-      setFileError("");
-      setDescriptionError("");
-      setIsSubmitting(false);
-    }
-  }, [opened, recipe]);
-
-  const validateForm = () => {
-    let valid = true;
-
-    if (!file) {
-      setFileError("Please upload a photo.");
-      valid = false;
-    } else {
-      setFileError("");
-    }
-
-    if (!description.trim()) {
-      setDescriptionError("Description is required.");
-      valid = false;
-    } else {
-      setDescriptionError("");
-    }
-
-    return valid && form.validate().hasErrors === false;
-  };
-
-  const notifySuccess = (message) => {
-    notifications.show({
-      title: message,
-      message: `Your recipe was ${message.toLowerCase()} successfully.`,
-      color: "green",
-      position: "bottom-center",
-    });
-  };
-
-  const notifyError = () => {
-    notifications.show({
-      title: "Couldn't save recipe",
-      message: "Something went wrong",
-      color: "red",
-      position: "bottom-center",
-    });
-  };
-
-  const getPhotoUrl = async (file) => {
-    if (file instanceof File) {
-      return await UploadService.uploadFile(file);
-    }
-    return file;
-  };
 
   const handleIngredientChange = (index, field, value) => {
     setIngredients((prev) => {
@@ -109,57 +126,12 @@ export function useRecipeForm({ recipe, isEdit, opened, onClose, user }) {
     setIngredients((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const fileUrl = await getPhotoUrl(file);
-
-      const recipeData = {
-        ...form.values,
-        ingredients,
-        description,
-        photo: fileUrl,
-        authorId: user?.userId ?? recipe?.authorId ?? undefined,
-      };
-
-      if (isEdit) {
-        await RecipeService.updateRecipe(recipe.id, recipeData);
-        notifySuccess("Recipe updated");
-      } else {
-        await RecipeService.createRecipe(recipeData);
-        notifySuccess("Recipe created");
-      }
-
-      onClose();
-    } catch {
-      notifyError();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return {
     form,
-    file,
-    setFile,
-    fileError,
-    descriptionError,
-    setDescriptionError,
-    description,
-    setDescription,
     ingredients,
     setIngredients,
-    isSubmitting,
     addIngredient,
     removeIngredient,
     handleIngredientChange,
-    handleSubmit,
   };
 }

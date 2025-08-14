@@ -30,7 +30,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/recipe/:recipeId" element={<DetailRecipePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<RegisterPage />} />
-            <Route path="profile" element={<UserProfilePage />} />
+            <Route path="profile/:userId" element={<UserProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

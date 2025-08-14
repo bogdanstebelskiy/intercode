@@ -1,31 +1,31 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Group, Text, Image } from "@mantine/core";
+import { Group, Text, Image, Flex } from "@mantine/core";
 
-export default function Dropzone({ style, file, setFile }) {
+export default function Dropzone({ style, value, onChange, error, ...props }) {
   const [rejected, setRejected] = useState(null);
 
-  console.log(file);
+  const file = value;
 
   const onDrop = useCallback(
     (acceptedFiles, rejectedFiles) => {
       if (acceptedFiles?.length) {
         const selectedFile = acceptedFiles[0];
 
-        setFile(
-          Object.assign(selectedFile, {
-            preview: URL.createObjectURL(selectedFile),
-          }),
-        );
+        const fileWithPreview = Object.assign(selectedFile, {
+          preview: URL.createObjectURL(selectedFile),
+        });
+
+        onChange?.(fileWithPreview);
         setRejected(null);
       }
 
       if (rejectedFiles?.length) {
         setRejected(rejectedFiles[0]);
-        setFile(null);
+        onChange?.(null);
       }
     },
-    [setFile],
+    [onChange],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -58,10 +58,14 @@ export default function Dropzone({ style, file, setFile }) {
         )}
       </div>
 
-      <Group>
-        <Text>
-          {file?.name || (typeof file === "string" && "Current Image")}
+      {error && (
+        <Text c="red" size="sm" mt="xs">
+          {error}
         </Text>
+      )}
+
+      <Flex direction="column" align="center" justify="center" gap="sm">
+        <Text>{file?.name || typeof file === "string"}</Text>
         {previewUrl && <Image src={previewUrl} alt="preview" w={100} h={100} />}
         {rejected?.file && (
           <div style={{ color: "red" }}>
@@ -73,7 +77,7 @@ export default function Dropzone({ style, file, setFile }) {
             ))}
           </div>
         )}
-      </Group>
+      </Flex>
     </>
   );
 }

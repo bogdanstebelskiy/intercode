@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { LikeModule } from './like/like.module';
 import { RatingModule } from './rating/rating.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RatingModule } from './rating/rating.module';
     RecipeModule,
     LikeModule,
     RatingModule,
+    CommentModule,
     AuthModule,
   ],
   controllers: [AppController],

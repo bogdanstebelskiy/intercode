@@ -33,5 +33,5 @@ export function useFetchRecipe(recipeId) {
     };
   }, [recipeId]);
 
-  return { recipe, loading, error };
+  return { recipe, setRecipe, loading, error };
 }

@@ -1,3 +1,5 @@
+import UploadService from "../../upload/services/upload.service.js";
+
 export const getBadgeColor = (difficulty) => {
   const colorsMap = {
     easy: "green",

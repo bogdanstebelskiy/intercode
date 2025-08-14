@@ -17,52 +17,99 @@ import MDEditor from "@uiw/react-md-editor";
 import rehypeSanitize from "rehype-sanitize";
 import { difficulties, Unit } from "../constants/index.js";
 import { useRecipeForm } from "../hooks/useRecipeForm.jsx";
-import { useEffect, useRef } from "react";
+import RecipeService from "../services/recipes.service.js";
+import { notifications } from "@mantine/notifications";
+import { getPhotoUrl } from "../../upload/utils/helpers.js";
 
-export default function RecipeModal({ opened, onClose, recipe = null }) {
+export default function RecipeModal({
+  opened,
+  onClose,
+  recipe = null,
+  onRecipeUpdate,
+  onRecipeCreate,
+}) {
   const { user } = useAuth();
   const isEdit = !!recipe;
-  const submissionRef = useRef(false);
 
   const {
     form,
-    file,
-    setFile,
-    fileError,
-    description,
-    setDescription,
-    descriptionError,
     ingredients,
     addIngredient,
     removeIngredient,
     handleIngredientChange,
-    isSubmitting,
-    handleSubmit,
   } = useRecipeForm({ recipe, isEdit, opened, onClose, user });
+
+  const handleSubmit = async (values) => {
+    const uploadedPhotoUrl = await getPhotoUrl(values.photo);
+
+    try {
+      const recipeData = {
+        ...values,
+        ingredients,
+        photo: uploadedPhotoUrl,
+        authorId: user?.userId ?? recipe?.authorId ?? undefined,
+      };
+
+      if (isEdit) {
+        const updatedRecipe = await RecipeService.updateRecipe(
+          recipe.id,
+          recipeData,
+        );
+        console.log(updatedRecipe);
+        onRecipeUpdate(updatedRecipe);
+        notifications.show({
+          title: "Recipe updated",
+          message: "Your recipe was updated successfully.",
+          color: "green",
+        });
+      } else {
+        const newRecipe = await RecipeService.createRecipe(recipeData);
+        onRecipeCreate(newRecipe);
+        notifications.show({
+          title: "Recipe created",
+          message: "Your recipe was created successfully.",
+          color: "green",
+        });
+      }
+    } catch {
+      notifications.show({
+        title: "Couldn't save recipe",
+        message: "Something went wrong",
+        color: "red",
+      });
+    } finally {
+      form.reset();
+      onClose();
+    }
+  };
 
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={() => {
+        form.reset();
+        onClose();
+      }}
       title={isEdit ? "Update Recipe" : "Add Recipe"}
-      size="lg"
+      size="xl"
+      lockScroll={false}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput label="Name" {...form.getInputProps("name")} required />
           <MDEditor
+            data-color-mode="light"
             autoFocus={true}
-            value={description}
             autoFocusEnd={true}
+            {...form.getInputProps("description")}
             visibleDragbar={false}
-            onChange={setDescription}
             previewOptions={{
               rehypePlugins: [[rehypeSanitize]],
             }}
           />
-          {descriptionError && (
-            <Text c="red" size="sm" mt={5}>
-              {descriptionError}
+          {form.errors.description && (
+            <Text size="sm" c="red">
+              {form.errors.description}
             </Text>
           )}
           <NumberInput
@@ -83,14 +130,8 @@ export default function RecipeModal({ opened, onClose, recipe = null }) {
               padding: "16px",
               marginTop: "10px",
             }}
-            file={file}
-            setFile={setFile}
+            {...form.getInputProps("photo")}
           />
-          {fileError && (
-            <Text c="red" size="sm" mt={5}>
-              {fileError}
-            </Text>
-          )}
 
           <Divider label="Ingredients" />
 
@@ -142,8 +183,9 @@ export default function RecipeModal({ opened, onClose, recipe = null }) {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
-              loading={isSubmitting}
+              disabled={form.submitting}
+              loading={form.submitting}
+              onClick={() => console.log(form.validate())}
             >
               {isEdit ? "Update" : "Create"}
             </Button>
