@@ -1,12 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
 import * as express from 'express';
-import { Request, Response } from 'express';
-import { join } from 'path';
+import { NextFunction, Request, Response } from 'express';
+import { join, resolve } from 'path';
+import { existsSync } from 'fs';
+import cookieParser from 'cookie-parser';
+import { AppModule } from './app.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
@@ -14,6 +15,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -21,19 +23,69 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
   app.setGlobalPrefix('api');
   app.use(cookieParser());
 
-  app.use(express.static(join(__dirname, '..', '..', 'ui', 'dist')));
+  // Try different path strategies
+  let buildPath: string;
+  let indexPath: string;
 
-  app.use((req: Request, res: Response, next: () => void) => {
+  // For development (when running from api folder)
+  const devPath: string = join(__dirname, '..', '..', 'ui', 'dist');
+  // For production (when running from root)
+  const prodPath: string = join(process.cwd(), 'ui', 'dist');
+
+  console.log('Checking paths:');
+  console.log('Dev path:', devPath);
+  console.log('Prod path:', prodPath);
+  console.log('Dev path exists:', existsSync(devPath));
+  console.log('Prod path exists:', existsSync(prodPath));
+
+  if (existsSync(devPath)) {
+    buildPath = devPath;
+    console.log('Using dev path');
+  } else if (existsSync(prodPath)) {
+    buildPath = prodPath;
+    console.log('Using prod path');
+  } else {
+    console.error('Could not find UI build directory');
+    console.error('Make sure to run: cd ui && npm run build');
+    buildPath = prodPath; // fallback
+  }
+
+  indexPath = join(buildPath, 'index.html');
+  console.log('Final build path:', buildPath);
+  console.log('Final index path:', indexPath);
+  console.log('Index file exists:', existsSync(indexPath));
+
+  // Serve static files
+  app.use(express.static(buildPath));
+
+  // Handle client-side routing
+  app.use((req: Request, res: Response, next: NextFunction) => {
     if (!req.url.startsWith('/api')) {
-      res.sendFile(join(__dirname, '..', '..', 'ui', 'dist', 'index.html'));
+      if (existsSync(indexPath)) {
+        res.sendFile(resolve(indexPath));
+      } else {
+        res.status(404).json({
+          message: 'React app not found. Please build the UI first.',
+          buildPath,
+          indexPath,
+        });
+      }
     } else {
       next();
     }
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Error starting the application:', error);
+  process.exit(1);
+});
